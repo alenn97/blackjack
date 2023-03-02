@@ -24,8 +24,8 @@ class Player():
 		self.bet = bet
 
 	def get_score(self):
-		score_soft = 0
-		score_hard = 0
+		score_low = 0
+		score_high = 0
 		for card in self.cards:
 			score_low += cards_value_low[cards.index(card)]
 			score_high += cards_value_high[cards.index(card)]
@@ -76,15 +76,16 @@ class Game():
 	def remove_player(self, player):
 		self.players.remove(player)
 
-	def start(self):
+	def start(self, players, dealer):
 		# Betting
-		for player in self.players:
+		for player in players:
 			bet = 0
 			while bet < self.minimum_bet:
-				bet = input("{name}, insert your bet: ".format(player.name))
+				bet = float(input("{name}, insert your bet: ".format(name = player.name)))
 				if bet < self.minimum_bet:
 					logger.warning("The bet must be more or equal than {min_bet}".format(min_bet = self.minimum_bet))
 			player.add_bet(bet)
+			player.cards = []
 		# Distributing first cards
 		for player in self.players:
 			player.call()
@@ -93,22 +94,22 @@ class Game():
 			player.call()
 		self.covered_card = random.choice(cards)
 
-		print("Dealer: {cards} ---> {score}".format(cards = dealer.cards, score = dealer.get_score()))
-		for player in self.players:
-			print("{name}: {cards} ---> {score}".format(name = player.name, cards = player.cards, score = player.get_score()))
+		print("Dealer: {cards} ---> {score}".format(cards=dealer.cards, score=dealer.get_score()))
+		for player in players:
+			print("{name}: {cards} ---> {score}".format(name=player.name, cards=player.cards, score=player.get_score()))
 
-	def players_hand(self, player):
-		print("{name}, it's your turn.".format(name=self.name))
+	def player_hand(self, player):
+		print("{name}, it's your turn.".format(name=player.name))
 		player.stop = False
-		score = self.get_score()
+		score = player.get_score()
 		moves = 0
 		if score == 21:
-			print("Your cards are: {cards}".format(cards=self.cards))
+			print("Your cards are: {cards}".format(cards=player.cards))
 			print('BLACKJAK!')
 			self.stay()
 		else:
-			while ~self.stop:
-				print('Your cards are: {cards}'.format(cards=self.cards))
+			while ~player.stop:
+				print('Your cards are: {cards}'.format(cards=player.cards))
 				print('Your score is: {score}'.format(score=score))
 				if score >= 21:
 					self.stay()
@@ -146,32 +147,41 @@ class Game():
 
 
 
-###
+### MAIN
+
 print("Welcome to SPPL's casino!")
-n_players = input("Please, enter the number of players at the table: ")
+n_players = int(input("Please, enter the number of players at the table: "))
 players = []
 for i in range(n_players):
 	print("Player number " + str(i+1))
 	player_name = input("Please, insert your name: ")
-	player_balance = input("Please, insert your current balance: ")
-	vars(player_name) = Player(player_name, player_balance)
-	players.append(vars(player_name))
+	player_balance = float(input("Please, insert your current balance: "))
+	locals()[player_name] = Player(player_name, player_balance)
+	players.append(locals()[player_name])
 
+print('\n')
 print("Thank you, all players have been registered.")
+print('\n')
+
 minimum_bet = 0
 while minimum_bet <= 0:
-	minimum_bet = input("Please choose the minimum bet for this game: ")
+	minimum_bet = float(input("Please choose the minimum bet for this game: "))
 	if minimum_bet <= 0:
 		logger.warning("The minimum bet must be more than 0.")
 
+print('\n')
 print("Thank you, we are now ready to start playing.\nGood luck!")
 print("\n\n\n")
 
 dealer = Player('dealer', float('inf'))
 game = Game(players, minimum_bet)
-game.start()
-end = True
-while end == True:
+game.start(players, dealer)
+print('\n\n')
+
+
+# tested up to here
+end = False
+while ~end:
 	for player in players:
 		game.player_hand(player)
 	game.dealer_hand(dealer)
@@ -184,15 +194,15 @@ while end == True:
 		if answer == "Yes":
 			print("Player number " + str(len(players)+1))
 			player_name = input("Please, insert your name: ")
-			player_balance = input("Please, insert your current balance: ")
-			vars(player_name) = Player(player_name, player_balance)
+			player_balance = float(input("Please, insert your current balance: "))
+			locals()[player_name] = Player(player_name, player_balance)
 			game.add_player(var(player_name))
 		answer = input("Do you want to remove a player? (Yes/No)")
 		if answer == "Yes":
 			player_name = input("Which player would you like to remove? \n")
 			game.remove_player(var(player_name))
 	else:
-		end = False
+		end = True
 
 print("\n\n\n")
 print("The game is ended.")
